@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>聊天窗口</title>
+	<link rel="stylesheet" href="css/style.css" media="screen" type="text/css" />
+</head>
+<body>
+<div id="convo" data-from="Sonu Joshi">
+	<div class="head">聊天中</div>
+	<ul class="chat-thread">
+		<li class="left">Are we meeting today?</li>
+		<li class="right">yes, what time suits you?</li>
+	</ul>
+	<div class="content_div">
+		<input class="content" type="text" placeholder="输入内容...">
+	</div>
+</div>
+<div style="text-align:center;clear:both">
+</div>
+  <script src='jquery.js'></script>
+  <script src='jquery-1.10.2.js'></script>
+<script>
+	var uid;
+	var html;
+	var time;
+//	uid = prompt('请输入uid',"");
+	console.log($('.chat-thread')[0].scrollHeight);
+	$('.chat-thread').scrollTop($('.chat-thread')[0].scrollHeight);
+	$(function(){
+		var websocket = new WebSocket('ws://192.168.0.180:9666');
+		websocket.onopen = function(evt){
+			console.log('连接成功了');
+		}
+		websocket.onmessage = function(evt){
+			//todo 填充内容
+			console.log('return-data:'+evt.data);
+			push(evt.data)
+		}
+		websocket.onclose = function(evt){
+			console.log('close');
+		}
+		websocket.onerror = function(evt,e){
+			console.log('error:'+evt.data);
+		}
+		$('.content').keydown(function(event){
+			if(event.keyCode == 13){
+				var text = $('.content').val();
+				var myDate = new Date();//获取系统当前时间
+				time = myDate.getFullYear()+'-'+(myDate.getMonth()+1)+'-'+myDate.getDate()+' '+myDate.getHours()+':'+myDate.getMinutes()+':'+myDate.getSeconds();
+				var send_content = {uid:uid,content:text,time:time};
+				websocket.send(JSON.stringify(send_content));
+				$('.content').val("")
+				$('.chat-thread').scrollTop($('.chat-thread')[0].scrollHeight);
+			}
+		})
+	})
+	function push(data){
+		data = JSON.parse(data);
+		if(data.uid == uid){
+			html = "<li class='right'><span class='li'>"+data.content+"</span></li>";
+		}else {
+			html = "<li class='left'><span class='li'>"+data.content+"</span></li>";
+		}
+		$('.chat-thread').append(html)
+	}
+</script>
+</body>
+
+</html>
